@@ -150,3 +150,4 @@ After setup:
 4. Configure production database connection
 5. Set up SSL/TLS certificates for HTTPS
 
+
