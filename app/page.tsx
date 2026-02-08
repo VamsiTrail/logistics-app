@@ -1,7 +1,7 @@
 import LogisticsTable from '@/components/LogisticsTable';
 import { Package, LogOut } from 'lucide-react';
 import { getServerSession } from 'next-auth';
-import { authOptions } from './api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { signOut } from 'next-auth/react';
 import LogoutButton from '@/components/LogoutButton';
 
