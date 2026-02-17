@@ -3,23 +3,27 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { executeQuery } from '@/lib/db';
 
-// Interface for Container_List record
+/**
+ * Interface for Container_List record
+ */
 export interface ContainerRecord {
-  Inv_Number: string;
+  Inv_Number: number;                 // INT in database
   Container_Id: string | null;
   Delivery_Notes: string | null;
-  Shippining_Line: string | null;   // CORRECT SPELLING
+  Shipping_Line: string | null;
 }
 
 /**
+ * ============================================================
  * GET /api/logistics
- * Fetches records from Container_List where Container_Id IS NULL
- * Protected route - requires authentication
+ * Fetch records where Container_Id IS NULL
+ * Protected Route
+ * ============================================================
  */
 export async function GET(request: NextRequest) {
-  // Check authentication
+  // 🔐 Check authentication
   const session = await getServerSession(authOptions);
-  
+
   if (!session) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
@@ -33,8 +37,8 @@ export async function GET(request: NextRequest) {
         Inv_Number,
         Container_Id,
         Delivery_Notes,
-        Shippining_Line 
-      FROM [MyApp].[dbo].[Container_List]
+        Shipping_Line
+      FROM [VM_LOCAL].[dbo].[Container_List]
       WHERE Container_Id IS NULL
       ORDER BY Inv_Number
     `;
@@ -61,14 +65,16 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * ============================================================
  * PUT /api/logistics
- * Updates Container_Id for a specific record using Inv_Number as identifier
- * Protected route - requires authentication
+ * Update Container_Id using Inv_Number
+ * Protected Route
+ * ============================================================
  */
 export async function PUT(request: NextRequest) {
-  // Check authentication
+  // 🔐 Check authentication
   const session = await getServerSession(authOptions);
-  
+
   if (!session) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
@@ -80,39 +86,39 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { Inv_Number, Container_Id } = body;
 
-    // Validation
-    if (!Inv_Number || typeof Inv_Number !== 'string') {
+    // ✅ Validate Inv_Number (should be number)
+    if (!Inv_Number || isNaN(Number(Inv_Number))) {
       return NextResponse.json(
         { success: false, error: 'Invalid Inv_Number' },
         { status: 400 }
       );
     }
 
-    if (!Container_Id || typeof Container_Id !== 'string' || Container_Id.trim() === '') {
+    // ✅ Validate Container_Id
+    if (!Container_Id || Container_Id.trim() === '') {
       return NextResponse.json(
-        { success: false, error: 'Container_Id is required and cannot be empty' },
+        { success: false, error: 'Container_Id is required' },
         { status: 400 }
       );
     }
 
-    // CORRECTED QUERY – using EXACT database column name
     const query = `
-      UPDATE [MyApp].[dbo].[Container_List]
+      UPDATE [VM_LOCAL].[dbo].[Container_List]
       SET Container_Id = @ContainerId
       WHERE Inv_Number = @InvNumber
-        AND Container_Id IS NULL
+        AND Container_Id IS NULL;
 
       SELECT 
         Inv_Number,
         Container_Id,
         Delivery_Notes,
-        Shippining_Line
-      FROM [MyApp].[dbo].[Container_List]
-      WHERE Inv_Number = @InvNumber
+        Shipping_Line
+      FROM [VM_LOCAL].[dbo].[Container_List]
+      WHERE Inv_Number = @InvNumber;
     `;
 
     const params = {
-      InvNumber: Inv_Number,
+      InvNumber: Number(Inv_Number),  // force numeric
       ContainerId: Container_Id.trim(),
     };
 

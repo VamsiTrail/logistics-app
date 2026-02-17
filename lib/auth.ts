@@ -17,7 +17,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
   try {
     const query = `
       SELECT id, username, email, password_hash, role, created_at
-      FROM [MyApp].[dbo].[Users]
+      FROM [VM_LOCAL].[dbo].[Users]
       WHERE username = @username
     `;
     
@@ -36,7 +36,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   try {
     const query = `
       SELECT id, username, email, password_hash, role, created_at
-      FROM [MyApp].[dbo].[Users]
+      FROM [VM_LOCAL].[dbo].[Users]
       WHERE email = @email
     `;
     
@@ -78,7 +78,7 @@ export async function createUser(
   username: string,
   email: string,
   password: string,
-  role: string = 'user'
+  role: string = 'sa'
 ): Promise<User | null> {
   try {
     // For OAuth users (empty password), use a placeholder hash
@@ -92,7 +92,7 @@ export async function createUser(
     }
     
     const query = `
-      INSERT INTO [MyApp].[dbo].[Users] (username, email, password_hash, role, created_at)
+      INSERT INTO [VM_LOCAL].[dbo].[Users] (username, email, password_hash, role, created_at)
       OUTPUT INSERTED.id, INSERTED.username, INSERTED.email, INSERTED.password_hash, INSERTED.role, INSERTED.created_at
       VALUES (@username, @email, @password_hash, @role, GETDATE())
     `;

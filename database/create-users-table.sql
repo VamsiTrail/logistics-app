@@ -1,7 +1,7 @@
 -- Create Users table for authentication
--- Run this script in SQL Server Management Studio on the MyApp database
+-- Run this script in SQL Server Management Studio on the VM_LOCAL database
 
-USE [MyApp];
+USE [VM_LOCAL];
 GO
 
 -- Create Users table
@@ -39,6 +39,10 @@ BEGIN
     PRINT 'Index on email created';
 END
 GO
+
+
+
+
 
 
 

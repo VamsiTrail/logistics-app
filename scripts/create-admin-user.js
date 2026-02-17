@@ -35,7 +35,7 @@ async function main() {
     if (user) {
       console.log('\n✅ User created successfully!');
       console.log(`   ID: ${user.id}`);
-      console.log(`   Username: ${user.username}`);
+      console.log(`   Username: ${user.username}`); 
       console.log(`   Email: ${user.email}`);
       console.log(`   Role: ${user.role}`);
     } else {
@@ -49,6 +49,10 @@ async function main() {
 }
 
 main();
+
+
+
+
 
 
 

@@ -16,12 +16,12 @@ export async function getDbConnection(): Promise<sql.ConnectionPool> {
 
   // Create new connection pool using SQL Authentication
   const config: sql.config = {
-    server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS',
-    database: process.env.DB_DATABASE || 'MyApp',
+    server: process.env.DB_SERVER || 'DCC7XQ14',
+    database: process.env.DB_DATABASE || 'VM_LOCAL',
 
     // SQL Authentication credentials
-    user: process.env.DB_USER || 'logistics_user',
-    password: process.env.DB_PASSWORD || 'Logistics@123',
+    user: process.env.DB_USER || 'sa',
+    password: process.env.DB_PASSWORD || 'vermeiren',
 
     options: {
       encrypt: false,

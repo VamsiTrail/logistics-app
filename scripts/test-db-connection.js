@@ -7,10 +7,10 @@ require('dotenv').config({ path: '.env.local' });
 const sql = require('mssql');
 
 const config = {
-  server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS',
-  database: process.env.DB_DATABASE || 'MyApp',
-  user: process.env.DB_USER || 'logistics_user',
-  password: process.env.DB_PASSWORD || 'Logistics@123',
+  server: process.env.DB_SERVER || 'DCC7XQ14',
+  database: process.env.DB_DATABASE || 'VM_LOCAL',
+  user: process.env.DB_USER || 'sa',
+  password: process.env.DB_PASSWORD || 'vermeiren ',
   options: {
     encrypt: false,
     trustServerCertificate: true,
@@ -67,7 +67,7 @@ async function testConnection() {
           .input('password_hash', sql.NVarChar, 'test_hash')
           .input('role', sql.NVarChar, 'user')
           .query(`
-            INSERT INTO [MyApp].[dbo].[Users] (username, email, password_hash, role, created_at)
+            INSERT INTO [VM_LOCAL].[dbo].[Users] (username, email, password_hash, role, created_at)
             OUTPUT INSERTED.id, INSERTED.username
             VALUES (@username, @email, @password_hash, @role, GETDATE())
           `);
@@ -78,7 +78,7 @@ async function testConnection() {
         // Clean up test record
         await pool.request()
           .input('id', sql.Int, testResult.recordset[0].id)
-          .query('DELETE FROM [MyApp].[dbo].[Users] WHERE id = @id');
+          .query('DELETE FROM [VM_LOCAL].[dbo].[Users] WHERE id = @id');
         console.log('✅ Test record cleaned up\n');
         
       } catch (insertError) {
@@ -95,7 +95,7 @@ async function testConnection() {
     console.log('🔍 Checking existing users...');
     const users = await pool.request().query(`
       SELECT id, username, email, role, created_at
-      FROM [MyApp].[dbo].[Users]
+      FROM [VM_LOCAL].[dbo].[Users]
       ORDER BY created_at DESC
     `);
     
@@ -123,6 +123,10 @@ async function testConnection() {
 }
 
 testConnection();
+
+
+
+
 
 
 
