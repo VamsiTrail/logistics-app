@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Edit2, X, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export interface ContainerRecord {
+  ID: number;             
   Inv_Number: string;
   Container_Id: string | null;
   Delivery_Notes: string | null;
@@ -11,33 +12,102 @@ export interface ContainerRecord {
 }
 
 interface EditingState {
-  invNumber: string | null;
+  id: number | null;
   value: string;
 }
 
-export default function LogisticsTable() {
+export default function LogisticsTable({ type = 'missing' }: { type?: 'missing' | 'all' }) 
+ {
   const [records, setRecords] = useState<ContainerRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<EditingState>({
-    invNumber: null,
-    value: '',
-  });
-  const [saving, setSaving] = useState<string | null>(null);
+  {/*const [editing, setEditing] = useState<EditingState>({invNumber: null,value: '',});*/}
+  {/*const [saving, setSaving] = useState<string | null>(null);*/}
+  const [saving, setSaving] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  {/*const [editingNotes, setEditingNotes] = useState({invNumber: null,value: ''});*/}
+  const [editingNotes, setEditingNotes] = useState<{invNumber: string | null, value: string}>({invNumber: null,value: ''});
+  const startEditingNotes = (invNumber: string, value: string | null) => {setEditingNotes({invNumber, value: value || '',});}; 
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const filteredRecords =
+  type === 'all'
 
+    ? records.filter((record) =>
+        record.Inv_Number?.toString().toLowerCase().includes(search.toLowerCase()) || 
+        record.Delivery_Notes?.toString().toLowerCase().includes(search.toLowerCase()) ||
+        record.Container_Id?.toString().toLowerCase().includes(search.toLowerCase())
+      )
+    : records; 
+
+  const sortedRecords = [...filteredRecords].sort((a, b) => {
+  if (!sortColumn) return 0;
+
+  const aValue = (a as any)[sortColumn] ?? '';
+  const bValue = (b as any)[sortColumn] ?? '';
+
+  if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+  if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+  return 0;
+});
+
+const [editing, setEditing] = useState<{
+  id: number | null;
+  Inv_Number: string;
+  Container_Id: string;
+  Delivery_Notes: string;
+  Shipping_Line: string;
+}>({
+  id: null,
+  Inv_Number: '',
+  Container_Id: '',
+  Delivery_Notes: '',
+  Shipping_Line: ''
+});
+
+const handleSort = (column: string) => {
+  if (sortColumn === column) {
+    // toggle direction
+    setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortColumn(column);
+    setSortDirection('asc');
+  }
+};
+
+const handleDelete = async (id: number) => {
+const confirmDelete = confirm("Are you sure you want to permanently delete this record?");
+  if (!confirmDelete) return;
+  try {
+    const response = await fetch('/api/logistics', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ID: id }),
+    });
+    const result = await response.json();
+    if (result.success) {
+      setSuccessMessage("Record deleted successfully");
+      fetchRecords();
+    }
+
+  } catch (e) {
+    console.error(e);
+  }
+};
   // Fetch records on component mount
   useEffect(() => {
+    console.log("Current Type:", type);
     fetchRecords();
-  }, []);
+  }, [type]);
 
   const fetchRecords = async () => {
     try {
       setLoading(true);
       setError(null);
       setSuccessMessage(null);
-      const response = await fetch('/api/logistics');
+      const response = await fetch(`/api/logistics?type=${type}`);
       const result = await response.json();
 
       if (result.success) {
@@ -53,19 +123,39 @@ export default function LogisticsTable() {
     }
   };
 
-  const startEditing = (invNumber: string, currentValue: string | null) => {
+
+ 
+  const startEditing = (record: ContainerRecord) => {
+    if (editing.id && editing.id !== record.ID) {
+      alert("Finish editing current row first");
+      return;
+    }
+
     setEditing({
-      invNumber,
-      value: currentValue || '',
+      id: record.ID,
+      Inv_Number: record.Inv_Number,
+      Container_Id: record.Container_Id || '',
+      Delivery_Notes: record.Delivery_Notes || '',
+      Shipping_Line: record.Shippining_Line || ''
     });
-    setValidationError(null);
-    setSuccessMessage(null);
   };
 
-  const cancelEditing = () => {
+  {/*const cancelEditing = () => {
     setEditing({ invNumber: null, value: '' });
     setValidationError(null);
+  };*/}
+
+  const cancelEditing = () => {
+    setEditing({
+      id : null,
+      Container_Id: '',
+      Delivery_Notes: '',
+      Shipping_Line: '',
+      Inv_Number: ''
+    });
+    setValidationError(null);
   };
+
 
   const validateContainerId = (value: string): string | null => {
     if (!value.trim()) {
@@ -74,50 +164,45 @@ export default function LogisticsTable() {
     return null;
   };
 
-  const handleSave = async (invNumber: string, containerId: string) => {
-    // Validate the field
-    const validationErr = validateContainerId(containerId);
+    const handleSave = async () => {
+
+    if (!editing.id) return;
+
+    const validationErr = validateContainerId(editing.Container_Id);
     if (validationErr) {
       setValidationError(validationErr);
       return;
     }
 
-    setSaving(invNumber);
-    setValidationError(null);
-    setSuccessMessage(null);
+    setSaving(editing.id);
 
     try {
       const response = await fetch('/api/logistics', {
-        method: 'PUT',
+        method: 'PATCH',   // ⭐ full row update
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          Inv_Number: invNumber,
-          Container_Id: containerId.trim(),
-        }),
+          body: JSON.stringify({
+            ID: editing.id,
+            Inv_Number: editing.Inv_Number,
+            Container_Id: editing.Container_Id,
+            Delivery_Notes: editing.Delivery_Notes,
+            Shipping_Line: editing.Shipping_Line
+          }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        // Remove the updated record from the list (since Container_Id is no longer NULL)
-        setRecords((prevRecords) =>
-          prevRecords.filter((record) => record.Inv_Number !== invNumber)
-        );
-        setSuccessMessage(`Container_Id "${containerId.trim()}" saved successfully for Invoice ${invNumber}`);
+        setSuccessMessage("Row updated successfully");
+
+        // refresh table
+        fetchRecords();
+
         cancelEditing();
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          setSuccessMessage(null);
-        }, 3000);
-      } else {
-        setValidationError(result.error || 'Failed to update record');
       }
-    } catch (err) {
-      setValidationError('Network error: Failed to save changes');
-      console.error(err);
+    } catch (e) {
+      console.error(e);
     } finally {
       setSaving(null);
     }
@@ -168,13 +253,33 @@ export default function LogisticsTable() {
           </div>
         </div>
       )}
-
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Search Input - Only for ALL records */}
+      {type === 'all' && (
+        <div className="ml-40 w-90 bg-white p-3 rounded-lg border">
+          <input
+            type="text"
+            placeholder="Search Bar"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
+      )}
+      <div className="ml-40 w-90 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ID
+                </th>
+                {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Container_Id
+                </th>*/}
+                <th
+                  onClick={() => handleSort('Container_Id')}
+                  className="cursor-pointer px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
                   Container_Id
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -186,73 +291,131 @@ export default function LogisticsTable() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Shippining_Line
                 </th>
+                {type === 'missing' && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {records.map((record) => {
-                const isEditing = editing.invNumber === record.Inv_Number;
-                const isSaving = saving === record.Inv_Number;
-
+               {/*filteredRecords.map((record) => {*/}
+               {sortedRecords.map((record) => {
+                const isEditing = editing.id === record.ID;
+                const isSaving = saving === record.ID;
+                const isEditingNotes = editingNotes.invNumber === record.Inv_Number;
                 return (
                   <tr
                     key={record.Inv_Number}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    {/* Container_Id - Editable */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {isEditing ? (
-                        <div className="space-y-1">
-                          <input
-                            type="text"
-                            value={editing.value}
-                            onChange={(e) =>
-                              setEditing({ ...editing, value: e.target.value })
-                            }
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            autoFocus
-                            placeholder="Enter Container_Id"
-                          />
-                          {validationError && (
-                            <p className="text-xs text-red-600">{validationError}</p>
+                    className="hover:bg-gray-50 transition-colors">
+                      {/* ID - Read-only */}
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                          {type === 'all' ? (
+                            record.ID || <span className="text-gray-400 italic">-</span>
+                          ) : (
+                            isEditing ? (
+                              <input
+                                type="text"
+                                value={record.ID}
+                                className="w-full px-2 py-1 border rounded"
+                              />
+                            ) : (
+                              record.ID || <span className="text-gray-400 italic">-</span>
+                            )
                           )}
-                        </div>
-                      ) : (
-                        <div className="text-red-600 font-medium">
-                          <span className="italic text-gray-400">Missing</span>
-                        </div>
-                      )}
-                    </td>
-
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {/* SHOW ALL PAGE → Always show actual value */}
+                        {type === 'all' ? (
+                          record.Container_Id ? (
+                            <span className="font-medium text-gray-900">
+                              {record.Container_Id}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 italic">-</span>
+                          )
+                        ) : (
+                          /* MISSING PAGE (Editable Mode) */
+                            isEditing ? (
+                                <input
+                                  type="text"
+                                  value={editing.Container_Id}
+                                  onChange={(e) =>
+                                    setEditing(prev => ({ ...prev, Container_Id: e.target.value }))
+                                  }
+                                  className="w-full px-2 py-1 border rounded"
+                                />
+                            ) : (
+                              <span className="italic text-gray-400">Missing</span>
+                            )
+                        )}
+                      </td>
                     {/* Delivery_Notes - Read-only */}
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {record.Delivery_Notes || (
-                        <span className="text-gray-400 italic">-</span>
-                      )}
-                    </td>
-
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                          {type === 'all' ? (
+                            record.Delivery_Notes || <span className="text-gray-400 italic">-</span>
+                          ) : (
+                            isEditing ? (
+                              <input
+                                type="text"
+                                value={editing.Delivery_Notes}
+                                onChange={(e) =>
+                                  setEditing(prev => ({ ...prev, Delivery_Notes: e.target.value }))
+                                }
+                                className="w-full px-2 py-1 border rounded"
+                              />
+                            ) : (
+                              record.Delivery_Notes || <span className="text-gray-400 italic">-</span>
+                            )
+                          )}
+                      </td>
                     {/* Inv_Number - Read-only */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {record.Inv_Number}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {type === 'all' ? (
+                          record.Inv_Number
+                        ) : (
+                          isEditing ? (
+                              <input
+                                type="text"
+                                value={editing.Inv_Number}
+                                onChange={(e) =>
+                                  setEditing(prev => ({ ...prev, Inv_Number: e.target.value }))
+                                }
+                                className="w-full px-2 py-1 border rounded"
+                              />
+                          ) : (
+                            record.Inv_Number
+                          )
+                        )}
                     </td>
 
                     {/* Shippining_Line - Read-only */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.Shippining_Line || (
-                        <span className="text-gray-400 italic">-</span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {type === 'all' ? (
+                          record.Shippining_Line || '-'
+                        ) : (
+                          isEditing ? (
+                            <input
+                              type="text"
+                              value={editing.Shipping_Line}
+                              onChange={(e)=>
+                                setEditing(prev => ({...prev, Shipping_Line:e.target.value}))
+                              }
+                              className="w-full px-2 py-1 border rounded"
+                            />
+                          ) : (
+                            record.Shippining_Line || '-'
+                          )
+                        )}
                     </td>
-
+                    
                     {/* Actions */}
+                    {type === 'missing' && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {isEditing ? (
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() =>
-                              handleSave(record.Inv_Number, editing.value)
-                            }
+                            onClick={handleSave}
                             disabled={isSaving}
                             className="p-1 text-green-600 hover:text-green-700 disabled:opacity-50"
                             title="Save"
@@ -273,18 +436,30 @@ export default function LogisticsTable() {
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() =>
-                            startEditing(record.Inv_Number, record.Container_Id)
-                          }
-                          className="flex items-center gap-1 px-3 py-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded border border-blue-200"
-                          title="Edit Container_Id"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                          Edit
-                        </button>
+                          <div className="flex items-center gap-2">
+                            {/* EDIT BUTTON */}
+                            <button
+                              onClick={() =>
+                                startEditing(record)
+                              }
+                              className="flex items-center gap-1 px-3 py-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded border border-blue-200"
+                              title="Edit Container_Id"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                              Edit
+                            </button> 
+                            {/* DELETE BUTTON */}
+                            <button
+                              onClick={() => handleDelete(record.ID)}
+                              className="flex items-center gap-1 px-3 py-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded border border-red-200"
+                              title="Delete"
+                            >
+                              Delete
+                            </button>  
+                        </div>                     
                       )}
                     </td>
+                    )}
                   </tr>
                 );
               })}
@@ -294,7 +469,7 @@ export default function LogisticsTable() {
       </div>
 
       <div className="text-sm text-gray-500 text-center">
-        Showing {records.length} record{records.length !== 1 ? 's' : ''} with missing Container_Id
+        Showing {filteredRecords.length} record{records.length !== 1 ? 's' : ''} with missing Container_Id
       </div>
     </div>
   );
