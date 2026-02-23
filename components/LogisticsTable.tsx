@@ -32,26 +32,44 @@ export default function LogisticsTable({ type = 'missing' }: { type?: 'missing' 
   const startEditingNotes = (invNumber: string, value: string | null) => {setEditingNotes({invNumber, value: value || '',});}; 
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const filteredRecords =
+  
+  {/*const filteredRecords =
   type === 'all'
 
     ? records.filter((record) =>
-        record.Inv_Number?.toString().toLowerCase().includes(search.toLowerCase()) || 
-        record.Delivery_Notes?.toString().toLowerCase().includes(search.toLowerCase()) ||
-        record.Container_Id?.toString().toLowerCase().includes(search.toLowerCase())
-      )
-    : records; 
+        record.Inv_Number?.toString().toLowerCase().includes(search.toLowerCase())
+      )     
+    : records; */}
+  const filteredRecords =
+  type === 'all'
+    ? search.trim() === ''
+      ? records
+      : records.filter(
+          (record) => record.Inv_Number?.toString() === search.trim()
+        )
+    : records;
 
   const sortedRecords = [...filteredRecords].sort((a, b) => {
-  if (!sortColumn) return 0;
+    if (!sortColumn) return 0;
 
-  const aValue = (a as any)[sortColumn] ?? '';
-  const bValue = (b as any)[sortColumn] ?? '';
+    const aValue = (a as any)[sortColumn];
+    const bValue = (b as any)[sortColumn];
 
-  if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-  if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-  return 0;
-});
+    // ✅ number sorting
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection === 'asc'
+        ? aValue - bValue
+        : bValue - aValue;
+    }
+
+    // ✅ string sorting (fallback)
+    const aStr = String(aValue ?? '').toLowerCase();
+    const bStr = String(bValue ?? '').toLowerCase();
+
+    if (aStr < bStr) return sortDirection === 'asc' ? -1 : 1;
+    if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
 
 const [editing, setEditing] = useState<{
   id: number | null;
@@ -178,7 +196,7 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
 
     try {
       const response = await fetch('/api/logistics', {
-        method: 'PATCH',   // ⭐ full row update
+        method: 'PATCH', 
         headers: {
           'Content-Type': 'application/json',
         },
