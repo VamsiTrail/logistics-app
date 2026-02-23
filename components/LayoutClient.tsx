@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import LogisticsTable from './LogisticsTable';
 import LogoutButton from './LogoutButton';
-
+import Link from 'next/link';
+import ContainerHistoryPage from '@/app/container-history/page';
 
 
 export default function LayoutClient({ user }: { user: string }) {
   const [open, setOpen] = useState(false);
   const logoUrl = "https://www.vermeiren.com/web/web.nsf/VERMEIREN%20LOGO%202022%20RGB.png";
-  const [view, setView] = useState<'home' | 'missing' | 'all'>('home');
+  {/*const [view, setView] = useState<'home' | 'missing' | 'all'>('home');*/}
+  const [view, setView] = useState<'home' | 'missing' | 'all' | 'history'>('home');
 return (
   <div className="relative min-h-screen bg-gray-50 flex">
     {/* Sidebar */}
@@ -34,12 +36,23 @@ return (
             </button>
 
             <button onClick={() => { setView('missing'); setOpen(false); }} className="block w-full text-left hover:bg-gray-100 p-2 rounded">
-              Containers
+              Edit
             </button>
 
             <button onClick={() => { setView('all'); setOpen(false); }} className="block w-full text-left hover:bg-gray-100 p-2 rounded">
-              All Records
+              Record
+            </button>   
+
+            <button
+              onClick={() => {
+                setView('history');
+                setOpen(false);
+              }}
+              className="block w-full text-left hover:bg-gray-100 p-2 rounded"
+            >
+              History
             </button>
+
           </div>
 
           <div className="ml-2 mt-auto border-t p-4">
@@ -110,6 +123,9 @@ return (
           <LogisticsTable type="all" />
         )}
 
+        {view === 'history' && (
+          <ContainerHistoryPage />
+        )}
       </div>
 
     </div>

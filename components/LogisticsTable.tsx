@@ -273,7 +273,7 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
       )}
       {/* Search Input - Only for ALL records */}
       {type === 'all' && (
-        <div className="ml-40 w-90 bg-white p-3 rounded-lg border">
+        <div className="ml-20 w-40 bg-white p-3 rounded-lg border">
           <input
             type="text"
             placeholder="Search Bar"
@@ -283,12 +283,12 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
           />
         </div>
       )}
-      <div className="ml-40 w-90 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="ml-20 w-90 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-300">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 whitespace-nowrap text-sm text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ID
                 </th>
                 {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -296,21 +296,22 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
                 </th>*/}
                 <th
                   onClick={() => handleSort('Container_Id')}
-                  className="cursor-pointer px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                  className="cursor-pointer px-3 py-2 whitespace-nowrap text-sm text-left text-xs font-medium text-gray-500 uppercase"
                 >
                   Container_Id
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+
+                <th className="px-3 py-2 whitespace-nowrap text-sm text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Delivery_Notes
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 whitespace-nowrap text-sm text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Inv_Number
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 whitespace-nowrap text-sm  text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Shippining_Line
                 </th>
                 {type === 'missing' && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 whitespace-nowrap text-sm text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
                 )}
@@ -321,13 +322,13 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
                {sortedRecords.map((record) => {
                 const isEditing = editing.id === record.ID;
                 const isSaving = saving === record.ID;
-                const isEditingNotes = editingNotes.invNumber === record.Inv_Number;
+                {/*const isEditingNotes = editingNotes.invNumber === record.Inv_Number;*/}
                 return (
                   <tr
                     key={record.Inv_Number}
                     className="hover:bg-gray-50 transition-colors">
                       {/* ID - Read-only */}
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-2 py-1 text-sm text-gray-900">
                           {type === 'all' ? (
                             record.ID || <span className="text-gray-400 italic">-</span>
                           ) : (
@@ -342,7 +343,7 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
                             )
                           )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-2 py-1 whitespace-nowrap text-sm">
                         {/* SHOW ALL PAGE → Always show actual value */}
                         {type === 'all' ? (
                           record.Container_Id ? (
@@ -369,7 +370,7 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
                         )}
                       </td>
                     {/* Delivery_Notes - Read-only */}
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-2 py-1 text-sm text-gray-900">
                           {type === 'all' ? (
                             record.Delivery_Notes || <span className="text-gray-400 italic">-</span>
                           ) : (
@@ -388,7 +389,7 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
                           )}
                       </td>
                     {/* Inv_Number - Read-only */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-2 py-1 whitespace-nowrap text-sm">
                         {type === 'all' ? (
                           record.Inv_Number
                         ) : (
@@ -408,7 +409,7 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
                     </td>
 
                     {/* Shippining_Line - Read-only */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-2 py-1 whitespace-nowrap text-sm">
                         {type === 'all' ? (
                           record.Shippining_Line || '-'
                         ) : (
@@ -429,7 +430,7 @@ const confirmDelete = confirm("Are you sure you want to permanently delete this 
                     
                     {/* Actions */}
                     {type === 'missing' && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-2 py-1 whitespace-nowrap text-sm">
                       {isEditing ? (
                         <div className="flex items-center gap-2">
                           <button
